@@ -1,0 +1,40 @@
+services:
+  ollama:
+    build:
+      context: .
+      args:
+        OllamaVersion: ${OllamaVersion:-latest}
+        OllamaModelName: ${OllamaModelName:-gemma4}
+        OllamaModelParam: ${OllamaModelParam:-12b}
+    container_name: ollama
+    image: ghcr.io/hyper-w/ollama-with-openwebui:ollama-${OllamaVersion:-latest}
+    ports:
+      - "11434:11434"
+    env_file:
+      - Ollama.env
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            capabilities: [gpu]
+    restart: always
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:${OpenWebUiVersion:-main}
+    container_name: openwebui
+    ports:
+      - "8080:8080"
+    env_file:
+      - OpenWebUI.env
+    depends_on:
+      - ollama
+    volumes:
+      - type: volume
+        source: openwebui_data
+        target: /app/backend/data
+    restart: always
+
+volumes:
+  openwebui_data:
+    name: openwebui_data
